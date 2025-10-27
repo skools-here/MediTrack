@@ -1,0 +1,102 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
+All colors MUST be HSL.
+*/
+
+@layer base {
+  :root {
+    /* === Base Colors (Dark Mode like Vercel) === */
+    --background: 0 0% 7%; /* Deep near-black background */
+    --foreground: 0 0% 98%; /* Soft white text */
+
+    --card: 0 0% 10%; /* Slightly lighter than background */
+    --card-foreground: 0 0% 98%;
+
+    --popover: 0 0% 10%;
+    --popover-foreground: 0 0% 98%;
+
+    /* === Brand Primary (Cyan-Blue Accent like Vercel’s glow) === */
+    --primary: 189 100% 55%; /* Cyan accent */
+    --primary-foreground: 0 0% 7%;
+
+    /* === Secondary and Muted Shades === */
+    --secondary: 0 0% 14%;
+    --secondary-foreground: 0 0% 90%;
+
+    --muted: 0 0% 14%;
+    --muted-foreground: 0 0% 65%;
+
+    /* === Accent / Border / Input === */
+    --accent: 189 100% 55%;
+    --accent-foreground: 0 0% 7%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 0 0% 18%;
+    --input: 0 0% 18%;
+    --ring: 189 100% 55%;
+
+    --radius: 0.75rem;
+
+    /* === Health Status Colors (keep vivid for readability) === */
+    --status-healthy: 142 70% 45%;   /* Green */
+    --status-caution: 38 92% 55%;   /* Yellow */
+    --status-critical: 0 84% 60%;   /* Red */
+    
+    /* === Chart Colors === */
+    --chart-heart: 348 83% 55%;
+    --chart-spo2: 189 100% 55%;
+    
+    /* === Gradients (Soft Vercel-style glow) === */
+    --gradient-healthy: linear-gradient(
+      135deg,
+      hsl(142 70% 45% / 0.25),
+      hsl(142 70% 45% / 0)
+    );
+    --gradient-caution: linear-gradient(
+      135deg,
+      hsl(38 92% 55% / 0.25),
+      hsl(38 92% 55% / 0)
+    );
+    --gradient-critical: linear-gradient(
+      135deg,
+      hsl(0 84% 60% / 0.25),
+      hsl(0 84% 60% / 0)
+    );
+    --gradient-card: linear-gradient(
+      135deg,
+      hsl(0 0% 10%),
+      hsl(0 0% 14%)
+    );
+
+    /* === Animation === */
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --pulse-duration: 2s;
+
+    /* === Sidebar (Dark Matte look) === */
+    --sidebar-background: 0 0% 7%;
+    --sidebar-foreground: 0 0% 98%;
+    --sidebar-primary: 189 100% 55%;
+    --sidebar-primary-foreground: 0 0% 7%;
+    --sidebar-accent: 0 0% 14%;
+    --sidebar-accent-foreground: 0 0% 98%;
+    --sidebar-border: 0 0% 18%;
+    --sidebar-ring: 189 100% 55%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+
