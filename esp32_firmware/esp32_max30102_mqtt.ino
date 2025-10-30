@@ -7,9 +7,9 @@
 
 MAX30105 particleSensor;
 
-const char* ssid = "ifon";
-const char* password = "niftylake";
-const char* mqtt_server = "172.20.10.4";
+const char* ssid = "";
+const char* password = "";
+const char* mqtt_server = "";
 const int mqtt_port = 1883;
 const char* topic = "esp32/health";
 
