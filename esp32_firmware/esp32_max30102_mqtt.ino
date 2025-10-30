@@ -162,12 +162,12 @@ void loop() {
           payload += "}";
 
           if (client.publish(topic, payload.c_str())) {
-              Serial.println("\n✅ Published valid data: " + payload);
+              Serial.println("\nPublished valid data: " + payload);
           } else {
-              Serial.println("\n⚠️ Publish failed!");
+              Serial.println("\nPublish failed!");
           }
         } else {
-            Serial.println("⚠️ Invalid reading, skipping publish...");
+            Serial.println("Invalid reading, skipping publish...");
         }
 
         Serial.print(", TempC=");
