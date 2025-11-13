@@ -9,17 +9,19 @@ interface LiveChartProps {
 }
 
 export function LiveChart({ readings, timeRange = 30 }: LiveChartProps) {
-  // Filter readings by time range
   const now = new Date();
   const cutoff = new Date(now.getTime() - timeRange * 60 * 1000);
-  const filteredReadings = readings
-    .filter((r) => new Date(r.timestamp) >= cutoff)
-    .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
 
+  // Filter last X minutes, ensure timestamps are valid Dates
+  const filteredReadings = readings
+    .filter((r) => r.timestamp instanceof Date && r.timestamp >= cutoff)
+    .sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
+
+  // Prepare data for the graph
   const chartData = filteredReadings.map((reading) => ({
-    time: format(new Date(reading.timestamp), 'HH:mm:ss'),
-    heartRate: reading.heartRate,
-    spo2: reading.spo2,
+    time: format(reading.timestamp, 'HH:mm:ss'),
+    heartRate: Number(reading.heartRate),
+    spo2: Number(reading.spo2),
   }));
 
   return (

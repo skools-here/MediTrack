@@ -146,11 +146,11 @@ void loop() {
         float tempC = particleSensor.readTemperature();
         float tempF = particleSensor.readTemperatureF();
 
-        String payload = "{";
-        payload += "\"heartRate\":" + String(heartRate) + ",";
-        payload += "\"spo2\":" + String(spo2) + ",";
-        payload += "\"temperatureC\":" + String(tempC, 2);
-        payload += "}";
+        String payload = "<reading>";
+        payload += "<heartRate>" + String(heartRate) + "</heartRate>";
+        payload += "<spo2>" + String(spo2) + "</spo2>";
+        payload += "<temperatureC>" + String(tempC, 2) + "</temperatureC>";
+        payload += "</reading>";
 
         // Publish via MQTT
         // only send if valid
@@ -161,13 +161,15 @@ void loop() {
           payload += "\"temperatureC\":" + String(tempC, 2);
           payload += "}";
 
+          if (validSPO2 && validHeartRate) {
           if (client.publish(topic, payload.c_str())) {
-              Serial.println("\nPublished valid data: " + payload);
+            Serial.println("\nPublished XML data:");
+            Serial.println(payload);
           } else {
-              Serial.println("\nPublish failed!");
+            Serial.println("\nPublish failed!");
           }
         } else {
-            Serial.println("Invalid reading, skipping publish...");
+          Serial.println("Invalid reading, skipping publish...");
         }
 
         Serial.print(", TempC=");

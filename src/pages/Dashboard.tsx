@@ -8,9 +8,7 @@ import { evaluateHealth } from "@/lib/healthEvaluation";
 import { HealthReading, Device } from "@/types/health";
 import { toast } from "sonner";
 
-// ✅ Change this to your Flask server URL
-const API_BASE_URL = "http://localhost:5000"; 
-// or e.g. "http://192.168.1.100:5000" if you’re testing on ESP32 + local network
+const API_BASE_URL = "http://localhost:5000";
 
 const mockDevices: Device[] = [
   {
@@ -21,6 +19,46 @@ const mockDevices: Device[] = [
   },
 ];
 
+// XML to JSON converter
+function xmlToJson(xml: any): any {
+  const obj: any = {};
+
+  if (xml.nodeType === 1) {
+    // element node
+    if (xml.attributes.length > 0) {
+      obj["@attributes"] = {};
+      for (let j = 0; j < xml.attributes.length; j++) {
+        const attribute = xml.attributes.item(j);
+        obj["@attributes"][attribute.nodeName] = attribute.nodeValue;
+      }
+    }
+  }
+
+  if (xml.nodeType === 3) {
+    return xml.nodeValue.trim();
+  }
+
+  if (xml.hasChildNodes()) {
+    for (let i = 0; i < xml.childNodes.length; i++) {
+      const item = xml.childNodes.item(i);
+      const nodeName = item.nodeName;
+
+      if (nodeName === "#text") continue;
+
+      if (typeof obj[nodeName] === "undefined") {
+        obj[nodeName] = xmlToJson(item);
+      } else {
+        if (!Array.isArray(obj[nodeName])) {
+          obj[nodeName] = [obj[nodeName]];
+        }
+        obj[nodeName].push(xmlToJson(item));
+      }
+    }
+  }
+
+  return obj;
+}
+
 export default function Dashboard() {
   const [readings, setReadings] = useState<HealthReading[]>([]);
   const [devices] = useState<Device[]>(mockDevices);
@@ -29,33 +67,48 @@ export default function Dashboard() {
   const fetchData = async () => {
     try {
       const response = await fetch(`${API_BASE_URL}/data`);
-      const data = await response.json();
+      const xmlText = await response.text();
 
-      if (Array.isArray(data) && data.length > 0) {
-        const mapped = data.map((item) => ({
-          id: item.timestamp,
-          deviceId: "ESP32-001",
-          timestamp: new Date(item.timestamp),
-          heartRate: item.heartRate,
-          spo2: item.spo2,
-          signalQuality: 100,
-        }));
+      const parser = new DOMParser();
+      const xml = parser.parseFromString(xmlText, "application/xml");
 
+      const dataJson = xmlToJson(xml);
+
+      // Flask returns <readings><item>...</item></readings>
+      const items = dataJson.readings?.item;
+
+      if (!items) {
+        setIsConnected(false);
+        return;
+      }
+
+      // Ensure array
+      const list = Array.isArray(items) ? items : [items];
+
+      const mapped = list.map((item: any) => ({
+        id: item.timestamp,
+        deviceId: "ESP32-001",
+        timestamp: new Date(item.timestamp),
+        heartRate: Number(item.heartRate),
+        spo2: Number(item.spo2),
+        signalQuality: 100,
+      }));
+
+      if (mapped.length > 0) {
         setReadings(mapped);
         setIsConnected(true);
 
         const latest = mapped[mapped.length - 1];
         const evaluation = evaluateHealth(latest.heartRate, latest.spo2);
+
         if (evaluation.overall === "critical") {
           toast.error("Critical Alert", { description: evaluation.message });
         } else if (evaluation.overall === "caution") {
           toast.warning("Caution", { description: evaluation.message });
         }
-      } else {
-        setIsConnected(false);
       }
     } catch (error) {
-      console.error("Failed to fetch data:", error);
+      console.error("Failed to fetch XML:", error);
       setIsConnected(false);
     }
   };
@@ -85,7 +138,6 @@ export default function Dashboard() {
             </p>
           </div>
 
-          {/* Connection indicator */}
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <div
               className={`w-2 h-2 rounded-full ${
@@ -118,7 +170,6 @@ export default function Dashboard() {
               />
             </div>
 
-            {/* Health Status */}
             <HealthStatusCard evaluation={evaluation} />
           </>
         ) : (
@@ -127,19 +178,16 @@ export default function Dashboard() {
           </p>
         )}
 
-        {/* Live Chart */}
+        {/* FIXED Live Chart */}
         <LiveChart readings={readings} timeRange={30} />
 
-        {/* Devices */}
         <DeviceList devices={devices} />
 
-        {/* Info Card */}
         <div className="rounded-lg bg-primary/5 border border-primary/20 p-4">
           <p className="text-sm text-muted-foreground">
             <span className="font-semibold text-foreground">Note:</span> This
-            dashboard now fetches live data from your ESP32 via the Flask API.{" "}
-            Make sure your Flask server is running and accessible on the same
-            network.
+            dashboard now receives XML data from the Flask backend. Ensure the
+            server is active and reachable.
           </p>
         </div>
       </div>
