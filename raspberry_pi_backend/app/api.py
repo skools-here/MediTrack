@@ -1,6 +1,6 @@
 from flask import Flask, request, Response
 from flask_cors import CORS
-from app.database import fetch_latest, fetch_latest_one, insert_reading
+from app.database import fetch_latest, fetch_latest_one, insert_data
 from app.config import FLASK_PORT
 from dicttoxml import dicttoxml
 import xml.etree.ElementTree as ET
@@ -67,7 +67,7 @@ def upload_data():
         spo2 = int(root.find("spo2").text)
         temperatureC = float(root.find("temperatureC").text)
 
-        insert_reading(heartRate, spo2, temperatureC)
+        insert_data(heartRate, spo2, temperatureC)
 
         return Response("<message>Data saved successfully</message>", mimetype="application/xml")
 
