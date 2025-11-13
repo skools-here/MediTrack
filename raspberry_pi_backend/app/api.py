@@ -1,6 +1,6 @@
 from flask import Flask, request, Response
 from flask_cors import CORS
-from app.datebase import fetch_latest, fetch_latest_one, insert_reading
+from app.database import fetch_latest, fetch_latest_one, insert_reading
 from app.config import FLASK_PORT
 from dicttoxml import dicttoxml
 import xml.etree.ElementTree as ET
