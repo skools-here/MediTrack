@@ -1,16 +1,20 @@
-from flask import Flask, jsonify, request
+from flask import Flask, request, Response
 from flask_cors import CORS
-from app.database import fetch_latest, fetch_latest_one, insert_data
+from app.datebase import fetch_latest, fetch_latest_one, insert_reading
 from app.config import FLASK_PORT
+from dicttoxml import dicttoxml
+import xml.etree.ElementTree as ET
 
 app = Flask(__name__)
-CORS(app)  
+CORS(app)
+
 
 @app.route("/data", methods=["GET"])
 def get_data():
     try:
         rows = fetch_latest()
-        return jsonify([
+
+        records = [
             {
                 "timestamp": r[0],
                 "heartRate": r[1],
@@ -18,46 +22,58 @@ def get_data():
                 "temperatureC": r[3],
             }
             for r in rows
-        ])
+        ]
+
+        xml_data = dicttoxml(records, custom_root="readings", attr_type=False)
+        return Response(xml_data, mimetype="application/xml")
+
     except Exception as e:
         print("Error fetching data:", e)
-        return jsonify({"error": "Failed to fetch data"}), 500
+        return Response("<error>Failed to fetch data</error>", mimetype="application/xml", status=500)
 
 
 @app.route("/latest", methods=["GET"])
 def get_latest():
     try:
         row = fetch_latest_one()
+
         if row:
-            return jsonify({
+            record = {
                 "timestamp": row[0],
                 "heartRate": row[1],
                 "spo2": row[2],
                 "temperatureC": row[3],
-            })
+            }
+
+            xml_data = dicttoxml(record, custom_root="reading", attr_type=False)
+            return Response(xml_data, mimetype="application/xml")
+
         else:
-            return jsonify({"error": "No data yet"}), 404
+            return Response("<error>No data yet</error>", mimetype="application/xml", status=404)
+
     except Exception as e:
         print("Error fetching latest reading:", e)
-        return jsonify({"error": "Failed to fetch latest reading"}), 500
+        return Response("<error>Failed to fetch latest reading</error>", mimetype="application/xml", status=500)
+
 
 @app.route("/upload", methods=["POST"])
 def upload_data():
     try:
-        data = request.get_json(force=True)
-        heartRate = data.get("heartRate")
-        spo2 = data.get("spo2")
-        temperatureC = data.get("temperatureC")
+        xml_raw = request.data.decode("utf-8")
 
-        if heartRate is None or spo2 is None or temperatureC is None:
-            return jsonify({"error": "Missing required fields"}), 400
+        root = ET.fromstring(xml_raw)
 
-        insert_data(heartRate, spo2, temperatureC)
+        heartRate = int(root.find("heartRate").text)
+        spo2 = int(root.find("spo2").text)
+        temperatureC = float(root.find("temperatureC").text)
 
-        return jsonify({"message": "Data saved successfully"}), 200
+        insert_reading(heartRate, spo2, temperatureC)
+
+        return Response("<message>Data saved successfully</message>", mimetype="application/xml")
+
     except Exception as e:
         print("Error saving data:", e)
-        return jsonify({"error": "Failed to save data"}), 500
+        return Response("<error>Failed to save data</error>", mimetype="application/xml", status=500)
 
 
 def start_flask():

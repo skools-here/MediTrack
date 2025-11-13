@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react';
-import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { useState, useEffect } from "react";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Table,
   TableBody,
@@ -9,12 +9,12 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
-import { Download, Calendar } from 'lucide-react';
-import { format } from 'date-fns';
-import { evaluateHealth } from '@/lib/healthEvaluation';
-import { HealthReading } from '@/types/health';
+} from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { Download, Calendar } from "lucide-react";
+import { format } from "date-fns";
+import { evaluateHealth } from "@/lib/healthEvaluation";
+import { HealthReading } from "@/types/health";
 
 const API_BASE_URL = "http://localhost:5000";
 
@@ -46,8 +46,8 @@ function xmlToJson(xml: any): any {
 
 export default function History() {
   const [readings, setReadings] = useState<HealthReading[]>([]);
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
 
   // Fetch real XML history
   const fetchHistory = async () => {
@@ -83,7 +83,7 @@ export default function History() {
   }, []);
 
   // Filter by date range
-  const filteredReadings = readings.filter((reading) => {
+  const filteredReadings = readings.filter(reading => {
     const t = reading.timestamp;
 
     if (startDate && t < new Date(startDate)) return false;
@@ -94,11 +94,11 @@ export default function History() {
 
   // Export CSV
   const exportToCSV = () => {
-    const headers = ['Timestamp', 'Device', 'Heart Rate', 'SpO2', 'Status'];
-    const rows = filteredReadings.map((reading) => {
+    const headers = ["Timestamp", "Device", "Heart Rate", "SpO2", "Status"];
+    const rows = filteredReadings.map(reading => {
       const evalStatus = evaluateHealth(reading.heartRate, reading.spo2);
       return [
-        format(reading.timestamp, 'yyyy-MM-dd HH:mm:ss'),
+        format(reading.timestamp, "yyyy-MM-dd HH:mm:ss"),
         reading.deviceId,
         reading.heartRate,
         reading.spo2,
@@ -106,12 +106,12 @@ export default function History() {
       ];
     });
 
-    const csv = [headers, ...rows].map((r) => r.join(',')).join('\n');
-    const blob = new Blob([csv], { type: 'text/csv' });
+    const csv = [headers, ...rows].map(r => r.join(",")).join("\n");
+    const blob = new Blob([csv], { type: "text/csv" });
     const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
+    const a = document.createElement("a");
     a.href = url;
-    a.download = `history-${format(new Date(), 'yyyy-MM-dd')}.csv`;
+    a.download = `history-${format(new Date(), "yyyy-MM-dd")}.csv`;
     a.click();
   };
 
@@ -122,7 +122,9 @@ export default function History() {
           <h1 className="text-4xl font-bold tracking-tight bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
             History
           </h1>
-          <p className="text-muted-foreground mt-1">View and export historical health data</p>
+          <p className="text-muted-foreground mt-1">
+            View and export historical health data
+          </p>
         </div>
 
         <Card className="p-6 border-border/50 bg-gradient-to-br from-card to-secondary/50">
@@ -134,7 +136,7 @@ export default function History() {
               <Input
                 type="date"
                 value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
+                onChange={e => setStartDate(e.target.value)}
                 className="pl-10"
                 placeholder="Start Date"
               />
@@ -146,7 +148,7 @@ export default function History() {
               <Input
                 type="date"
                 value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
+                onChange={e => setEndDate(e.target.value)}
                 className="pl-10"
                 placeholder="End Date"
               />
@@ -173,22 +175,40 @@ export default function History() {
               </TableHeader>
 
               <TableBody>
-                {filteredReadings.map((reading) => {
-                  const evalStatus = evaluateHealth(reading.heartRate, reading.spo2);
+                {filteredReadings.map(reading => {
+                  const evalStatus = evaluateHealth(
+                    reading.heartRate,
+                    reading.spo2
+                  );
                   const statusColors = {
-                    healthy: "bg-status-healthy/20 text-status-healthy border-status-healthy/40",
-                    caution: "bg-status-caution/20 text-status-caution border-status-caution/40",
-                    critical: "bg-status-critical/20 text-status-critical border-status-critical/40",
+                    healthy:
+                      "bg-status-healthy/20 text-status-healthy border-status-healthy/40",
+                    caution:
+                      "bg-status-caution/20 text-status-caution border-status-caution/40",
+                    critical:
+                      "bg-status-critical/20 text-status-critical border-status-critical/40",
                   };
 
                   return (
-                    <TableRow key={reading.id} className="hover:bg-secondary/30">
-                      <TableCell>{format(reading.timestamp, 'MMM dd, yyyy HH:mm:ss')}</TableCell>
-                      <TableCell>{reading.deviceId}</TableCell>
-                      <TableCell className="text-right">{reading.heartRate} bpm</TableCell>
-                      <TableCell className="text-right">{reading.spo2}%</TableCell>
+                    <TableRow
+                      key={reading.id}
+                      className="hover:bg-secondary/30"
+                    >
                       <TableCell>
-                        <Badge variant="outline" className={statusColors[evalStatus.overall]}>
+                        {format(reading.timestamp, "MMM dd, yyyy HH:mm:ss")}
+                      </TableCell>
+                      <TableCell>{reading.deviceId}</TableCell>
+                      <TableCell className="text-right">
+                        {reading.heartRate} bpm
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {reading.spo2}%
+                      </TableCell>
+                      <TableCell>
+                        <Badge
+                          variant="outline"
+                          className={statusColors[evalStatus.overall]}
+                        >
                           {evalStatus.overall}
                         </Badge>
                       </TableCell>
