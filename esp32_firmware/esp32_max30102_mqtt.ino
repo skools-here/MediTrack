@@ -146,11 +146,11 @@ void loop() {
         float tempC = particleSensor.readTemperature();
         float tempF = particleSensor.readTemperatureF();
 
-        String payload = "{";
-        payload += "\"heartRate\":" + String(heartRate) + ",";
-        payload += "\"spo2\":" + String(spo2) + ",";
-        payload += "\"temperatureC\":" + String(tempC, 2);
-        payload += "}";
+        String payload = "<reading>";
+        payload += "<heartRate>" + String(heartRate) + "</heartRate>";
+        payload += "<spo2>" + String(spo2) + "</spo2>";
+        payload += "<temperatureC>" + String(tempC, 2) + "</temperatureC>";
+        payload += "</reading>";
 
         // Publish via MQTT
         // only send if valid
