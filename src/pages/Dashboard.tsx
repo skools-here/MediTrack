@@ -20,44 +20,6 @@ const mockDevices: Device[] = [
 ];
 
 // XML to JSON converter
-function xmlToJson(xml: any): any {
-  const obj: any = {};
-
-  if (xml.nodeType === 1) {
-    // element node
-    if (xml.attributes.length > 0) {
-      obj["@attributes"] = {};
-      for (let j = 0; j < xml.attributes.length; j++) {
-        const attribute = xml.attributes.item(j);
-        obj["@attributes"][attribute.nodeName] = attribute.nodeValue;
-      }
-    }
-  }
-
-  if (xml.nodeType === 3) {
-    return xml.nodeValue.trim();
-  }
-
-  if (xml.hasChildNodes()) {
-    for (let i = 0; i < xml.childNodes.length; i++) {
-      const item = xml.childNodes.item(i);
-      const nodeName = item.nodeName;
-
-      if (nodeName === "#text") continue;
-
-      if (typeof obj[nodeName] === "undefined") {
-        obj[nodeName] = xmlToJson(item);
-      } else {
-        if (!Array.isArray(obj[nodeName])) {
-          obj[nodeName] = [obj[nodeName]];
-        }
-        obj[nodeName].push(xmlToJson(item));
-      }
-    }
-  }
-
-  return obj;
-}
 
 export default function Dashboard() {
   const [readings, setReadings] = useState<HealthReading[]>([]);
@@ -67,34 +29,18 @@ export default function Dashboard() {
   const fetchData = async () => {
     try {
       const response = await fetch(`${API_BASE_URL}/data`);
-      const xmlText = await response.text();
+      const data = await response.json();
 
-      const parser = new DOMParser();
-      const xml = parser.parseFromString(xmlText, "application/xml");
+      if (Array.isArray(data) && data.length > 0) {
+        const mapped = data.map((item) => ({
+          id: `${item.timestamp}-${Math.random()}`,
+          deviceId: "ESP32-001",
+          timestamp: new Date(item.timestamp),
+          heartRate: item.heartRate,
+          spo2: item.spo2,
+          signalQuality: 100,
+        }));
 
-      const dataJson = xmlToJson(xml);
-
-      // Flask returns <readings><item>...</item></readings>
-      const items = dataJson.readings?.item;
-
-      if (!items) {
-        setIsConnected(false);
-        return;
-      }
-
-      // Ensure array
-      const list = Array.isArray(items) ? items : [items];
-
-      const mapped = list.map((item: any) => ({
-        id: item.timestamp,
-        deviceId: "ESP32-001",
-        timestamp: new Date(item.timestamp),
-        heartRate: Number(item.heartRate),
-        spo2: Number(item.spo2),
-        signalQuality: 100,
-      }));
-
-      if (mapped.length > 0) {
         setReadings(mapped);
         setIsConnected(true);
 
@@ -106,9 +52,10 @@ export default function Dashboard() {
         } else if (evaluation.overall === "caution") {
           toast.warning("Caution", { description: evaluation.message });
         }
+         
       }
     } catch (error) {
-      console.error("Failed to fetch XML:", error);
+      console.error("Failed to fetch JSNON:", error);
       setIsConnected(false);
     }
   };

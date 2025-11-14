@@ -18,55 +18,29 @@ import { HealthReading } from "@/types/health";
 
 const API_BASE_URL = "http://localhost:5000";
 
-// XML → JSON Parser
-function xmlToJson(xml: any): any {
-  const obj: any = {};
-  if (xml.nodeType === 1 && xml.attributes.length > 0) {
-    obj["@attributes"] = {};
-    for (let j = 0; j < xml.attributes.length; j++) {
-      const attribute = xml.attributes.item(j);
-      obj["@attributes"][attribute.nodeName] = attribute.nodeValue;
-    }
-  }
-  if (xml.nodeType === 3) return xml.nodeValue.trim();
-  if (xml.hasChildNodes()) {
-    for (let i = 0; i < xml.childNodes.length; i++) {
-      const item = xml.childNodes.item(i);
-      if (item.nodeName === "#text") continue;
-      if (!obj[item.nodeName]) obj[item.nodeName] = xmlToJson(item);
-      else {
-        if (!Array.isArray(obj[item.nodeName]))
-          obj[item.nodeName] = [obj[item.nodeName]];
-        obj[item.nodeName].push(xmlToJson(item));
-      }
-    }
-  }
-  return obj;
-}
-
 export default function History() {
   const [readings, setReadings] = useState<HealthReading[]>([]);
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
 
-  // Fetch real XML history
+  // === Fetch JSON history instead of XML ===
   const fetchHistory = async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/data`);
-      const xmlText = await response.text();
+      const response = await fetch(`${API_BASE_URL}/data-json`);
+      const data = await response.json();
 
-      const parser = new DOMParser();
-      const xml = parser.parseFromString(xmlText, "application/xml");
+      // Expecting structure like:
+      // {
+      //   "readings": [
+      //      { "timestamp": "2025-01-01T10:00:00Z", "heartRate": 72, "spo2": 98 }
+      //   ]
+      // }
 
-      const json = xmlToJson(xml);
-      const items = json.readings?.item;
-      if (!items) return;
+      if (!data.readings) return;
 
-      const list = Array.isArray(items) ? items : [items];
-
-      const parsed = list.map((item: any) => ({
+      const parsed = data.readings.map((item: any) => ({
         id: item.timestamp,
-        deviceId: "ESP32-001",
+        deviceId: item.deviceId || "ESP32-001",
         timestamp: new Date(item.timestamp),
         heartRate: Number(item.heartRate),
         spo2: Number(item.spo2),
@@ -82,8 +56,8 @@ export default function History() {
     fetchHistory();
   }, []);
 
-  // Filter by date range
-  const filteredReadings = readings.filter(reading => {
+  // === Filter by date range ===
+  const filteredReadings = readings.filter((reading) => {
     const t = reading.timestamp;
 
     if (startDate && t < new Date(startDate)) return false;
@@ -92,10 +66,10 @@ export default function History() {
     return true;
   });
 
-  // Export CSV
+  // === Export to CSV ===
   const exportToCSV = () => {
     const headers = ["Timestamp", "Device", "Heart Rate", "SpO2", "Status"];
-    const rows = filteredReadings.map(reading => {
+    const rows = filteredReadings.map((reading) => {
       const evalStatus = evaluateHealth(reading.heartRate, reading.spo2);
       return [
         format(reading.timestamp, "yyyy-MM-dd HH:mm:ss"),
@@ -106,9 +80,10 @@ export default function History() {
       ];
     });
 
-    const csv = [headers, ...rows].map(r => r.join(",")).join("\n");
+    const csv = [headers, ...rows].map((r) => r.join(",")).join("\n");
     const blob = new Blob([csv], { type: "text/csv" });
     const url = window.URL.createObjectURL(blob);
+
     const a = document.createElement("a");
     a.href = url;
     a.download = `history-${format(new Date(), "yyyy-MM-dd")}.csv`;
@@ -128,33 +103,28 @@ export default function History() {
         </div>
 
         <Card className="p-6 border-border/50 bg-gradient-to-br from-card to-secondary/50">
-          {/* Date Range Filters */}
+          {/* Date Filters and Export Button */}
           <div className="flex flex-col sm:flex-row gap-4 mb-6">
-            {/* Start Date */}
             <div className="flex-1 relative">
               <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
                 type="date"
                 value={startDate}
-                onChange={e => setStartDate(e.target.value)}
+                onChange={(e) => setStartDate(e.target.value)}
                 className="pl-10"
-                placeholder="Start Date"
               />
             </div>
 
-            {/* End Date */}
             <div className="flex-1 relative">
               <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
                 type="date"
                 value={endDate}
-                onChange={e => setEndDate(e.target.value)}
+                onChange={(e) => setEndDate(e.target.value)}
                 className="pl-10"
-                placeholder="End Date"
               />
             </div>
 
-            {/* Export CSV */}
             <Button onClick={exportToCSV} className="gap-2">
               <Download className="w-4 h-4" />
               Export CSV
@@ -175,12 +145,13 @@ export default function History() {
               </TableHeader>
 
               <TableBody>
-                {filteredReadings.map(reading => {
+                {filteredReadings.map((reading) => {
                   const evalStatus = evaluateHealth(
                     reading.heartRate,
                     reading.spo2
                   );
-                  const statusColors = {
+
+                  const statusColors: any = {
                     healthy:
                       "bg-status-healthy/20 text-status-healthy border-status-healthy/40",
                     caution:
@@ -190,10 +161,7 @@ export default function History() {
                   };
 
                   return (
-                    <TableRow
-                      key={reading.id}
-                      className="hover:bg-secondary/30"
-                    >
+                    <TableRow key={reading.id} className="hover:bg-secondary/30">
                       <TableCell>
                         {format(reading.timestamp, "MMM dd, yyyy HH:mm:ss")}
                       </TableCell>
