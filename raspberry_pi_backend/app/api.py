@@ -1,4 +1,4 @@
-from flask import Flask, jsonify,request
+from flask import Flask, jsonify, request
 from flask_cors import CORS
 from app.database import fetch_latest, fetch_latest_one, insert_data
 from app.config import FLASK_PORT
@@ -11,7 +11,6 @@ CORS(app)
 def get_data():
     try:
         rows = fetch_latest()
-
         records = [
             {
                 "timestamp": r[0],
@@ -21,35 +20,28 @@ def get_data():
             }
             for r in rows
         ]
-
-
+        return jsonify(records), 200
     except Exception as e:
         print("Error fetching data:", e)
         return jsonify({"error": "Failed to fetch data"}), 500
-
 
 
 @app.route("/latest", methods=["GET"])
 def get_latest():
     try:
         row = fetch_latest_one()
-
         if row:
-            return jsonify ( {
+            return jsonify({
                 "timestamp": row[0],
                 "heartRate": row[1],
                 "spo2": row[2],
                 "temperatureC": row[3],
             })
-
         else:
             return jsonify({"error": "No data yet"}), 404
-
-
     except Exception as e:
         print("Error fetching latest reading:", e)
         return jsonify({"error": "Failed to fetch latest reading"}), 500
-
 
 
 @app.route("/upload", methods=["POST"])
@@ -64,18 +56,15 @@ def upload_data():
             return jsonify({"error": "Missing required fields"}), 400
 
         insert_data(heartRate, spo2, temperatureC)
-
         return jsonify({"message": "Data saved successfully"}), 200
-
 
     except Exception as e:
         print("Error saving data:", e)
         return jsonify({"error": "Failed to save data"}), 500
 
 
-
 def start_flask():
-    print(f" Flask API running on port {FLASK_PORT}")
+    print(f"Flask API running on port {FLASK_PORT}")
     app.run(host="0.0.0.0", port=FLASK_PORT, debug=False)
 
 
