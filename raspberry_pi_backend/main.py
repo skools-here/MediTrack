@@ -1,4 +1,8 @@
 import threading
+
+import sys, os
+sys.path.append(os.path.dirname(__file__))
+
 from app.mqtt_handler import start_mqtt
 from app.api import start_flask
 

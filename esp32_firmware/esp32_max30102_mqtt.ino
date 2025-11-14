@@ -161,13 +161,15 @@ void loop() {
           payload += "\"temperatureC\":" + String(tempC, 2);
           payload += "}";
 
+          if (validSPO2 && validHeartRate) {
           if (client.publish(topic, payload.c_str())) {
-              Serial.println("\nPublished valid data: " + payload);
+            Serial.println("\nPublished XML data:");
+            Serial.println(payload);
           } else {
-              Serial.println("\nPublish failed!");
+            Serial.println("\nPublish failed!");
           }
         } else {
-            Serial.println("Invalid reading, skipping publish...");
+          Serial.println("Invalid reading, skipping publish...");
         }
 
         Serial.print(", TempC=");
