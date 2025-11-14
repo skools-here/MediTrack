@@ -57,14 +57,7 @@ export default function History() {
   }, []);
 
   // === Filter by date range ===
-  const filteredReadings = readings.filter((reading) => {
-    const t = reading.timestamp;
-
-    if (startDate && t < new Date(startDate)) return false;
-    if (endDate && t > new Date(endDate + "T23:59:59")) return false;
-
-    return true;
-  });
+  const filteredReadings=readings;
 
   // === Export to CSV ===
   const exportToCSV = () => {
