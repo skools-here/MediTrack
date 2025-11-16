@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Heart, Droplet } from "lucide-react";
+import { Heart, Droplet, Footprints } from "lucide-react";
 import { VitalCard } from "@/components/health/VitalCard";
 import { HealthStatusCard } from "@/components/health/HealthStatusCard";
 import { LiveChart } from "@/components/health/LiveChart";
@@ -19,8 +19,6 @@ const mockDevices: Device[] = [
   },
 ];
 
-// XML to JSON converter
-
 export default function Dashboard() {
   const [readings, setReadings] = useState<HealthReading[]>([]);
   const [devices] = useState<Device[]>(mockDevices);
@@ -38,6 +36,7 @@ export default function Dashboard() {
           timestamp: new Date(item.timestamp),
           heartRate: item.heartRate,
           spo2: item.spo2,
+          steps: item.steps ?? 0, // NEW STEP COUNT FIELD
           signalQuality: 100,
         }));
 
@@ -52,10 +51,9 @@ export default function Dashboard() {
         } else if (evaluation.overall === "caution") {
           toast.warning("Caution", { description: evaluation.message });
         }
-         
       }
     } catch (error) {
-      console.error("Failed to fetch JSNON:", error);
+      console.error("Failed to fetch JSON:", error);
       setIsConnected(false);
     }
   };
@@ -98,7 +96,8 @@ export default function Dashboard() {
         {/* Vital Cards */}
         {latestReading && evaluation ? (
           <>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Updated grid to 3 columns */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <VitalCard
                 title="Heart Rate"
                 value={latestReading.heartRate}
@@ -107,12 +106,23 @@ export default function Dashboard() {
                 icon={Heart}
                 lastUpdated={latestReading.timestamp}
               />
+
               <VitalCard
                 title="Oxygen Saturation"
                 value={latestReading.spo2}
                 unit="%"
                 status={evaluation.spo2Status}
                 icon={Droplet}
+                lastUpdated={latestReading.timestamp}
+              />
+
+              {/* NEW Step Count Card */}
+              <VitalCard
+                title="Step Count"
+                value={latestReading.steps ?? 0}
+                unit="steps"
+                status="neutral"
+                icon={Footprints}
                 lastUpdated={latestReading.timestamp}
               />
             </div>
@@ -125,7 +135,7 @@ export default function Dashboard() {
           </p>
         )}
 
-        {/* FIXED Live Chart */}
+        {/* Live Chart */}
         <LiveChart readings={readings} timeRange={30} />
 
         <DeviceList devices={devices} />
