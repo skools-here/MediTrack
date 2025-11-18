@@ -19,10 +19,11 @@ def on_message(client, userdata, msg):
         hr = float(data.get("heartRate", 0))
         spo2 = float(data.get("spo2", 0))
         temp = float(data.get("temperatureC", 0))
+        steps = int(data.get("steps", 0))   # NEW
 
         if validate_data(hr, spo2):
-            insert_data(hr, spo2, temp)
-            print(f"[SQLITE] Stored: HR={hr}, SpO2={spo2}, Temp={temp}")
+            insert_data(hr, spo2, temp, steps)   # pass steps
+            print(f"[SQLITE] Stored: HR={hr}, SpO2={spo2}, Temp={temp}, Steps={steps}")
         else:
             print(f"[SKIP] Invalid data: HR={hr}, SpO2={spo2}")
 

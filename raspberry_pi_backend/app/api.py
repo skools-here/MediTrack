@@ -6,25 +6,23 @@ from app.config import FLASK_PORT
 app = Flask(__name__)
 CORS(app)
 
-
 @app.route("/data", methods=["GET"])
 def get_data():
     try:
         rows = fetch_latest()
-        records = [
+        return jsonify([
             {
                 "timestamp": r[0],
                 "heartRate": r[1],
                 "spo2": r[2],
                 "temperatureC": r[3],
+                "steps": r[4]
             }
             for r in rows
-        ]
-        return jsonify(records), 200
+        ])
     except Exception as e:
         print("Error fetching data:", e)
         return jsonify({"error": "Failed to fetch data"}), 500
-
 
 @app.route("/latest", methods=["GET"])
 def get_latest():
@@ -36,13 +34,13 @@ def get_latest():
                 "heartRate": row[1],
                 "spo2": row[2],
                 "temperatureC": row[3],
+                "steps": row[4]
             })
         else:
             return jsonify({"error": "No data yet"}), 404
     except Exception as e:
         print("Error fetching latest reading:", e)
         return jsonify({"error": "Failed to fetch latest reading"}), 500
-
 
 @app.route("/upload", methods=["POST"])
 def upload_data():
@@ -51,22 +49,22 @@ def upload_data():
         heartRate = data.get("heartRate")
         spo2 = data.get("spo2")
         temperatureC = data.get("temperatureC")
+        steps = data.get("steps", 0)
 
         if heartRate is None or spo2 is None or temperatureC is None:
             return jsonify({"error": "Missing required fields"}), 400
 
-        insert_data(heartRate, spo2, temperatureC)
-        return jsonify({"message": "Data saved successfully"}), 200
+        # convert to numeric types if necessary
+        insert_data(float(heartRate), float(spo2), float(temperatureC), int(steps))
 
+        return jsonify({"message": "Data saved successfully"}), 200
     except Exception as e:
         print("Error saving data:", e)
         return jsonify({"error": "Failed to save data"}), 500
 
-
 def start_flask():
-    print(f"Flask API running on port {FLASK_PORT}")
+    print(f" Flask API running on port {FLASK_PORT}")
     app.run(host="0.0.0.0", port=FLASK_PORT, debug=False)
-
 
 if __name__ == "__main__":
     start_flask()
