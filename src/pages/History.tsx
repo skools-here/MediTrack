@@ -23,10 +23,9 @@ export default function History() {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
 
-  // === Fetch JSON history instead of XML ===
   const fetchHistory = async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/data-json`);
+      const response = await fetch(`${API_BASE_URL}/data`);
       const data = await response.json();
 
       // Expecting structure like:
@@ -44,6 +43,7 @@ export default function History() {
         timestamp: new Date(item.timestamp),
         heartRate: Number(item.heartRate),
         spo2: Number(item.spo2),
+        steps: Number(item.steps ?? 0),
       }));
 
       setReadings(parsed);
@@ -57,12 +57,12 @@ export default function History() {
   }, []);
 
   // === Filter by date range ===
-  const filteredReadings=readings;
+  const filteredReadings = readings;
 
   // === Export to CSV ===
   const exportToCSV = () => {
     const headers = ["Timestamp", "Device", "Heart Rate", "SpO2", "Status"];
-    const rows = filteredReadings.map((reading) => {
+    const rows = filteredReadings.map(reading => {
       const evalStatus = evaluateHealth(reading.heartRate, reading.spo2);
       return [
         format(reading.timestamp, "yyyy-MM-dd HH:mm:ss"),
@@ -73,7 +73,7 @@ export default function History() {
       ];
     });
 
-    const csv = [headers, ...rows].map((r) => r.join(",")).join("\n");
+    const csv = [headers, ...rows].map(r => r.join(",")).join("\n");
     const blob = new Blob([csv], { type: "text/csv" });
     const url = window.URL.createObjectURL(blob);
 
@@ -103,7 +103,7 @@ export default function History() {
               <Input
                 type="date"
                 value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
+                onChange={e => setStartDate(e.target.value)}
                 className="pl-10"
               />
             </div>
@@ -113,7 +113,7 @@ export default function History() {
               <Input
                 type="date"
                 value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
+                onChange={e => setEndDate(e.target.value)}
                 className="pl-10"
               />
             </div>
@@ -138,7 +138,7 @@ export default function History() {
               </TableHeader>
 
               <TableBody>
-                {filteredReadings.map((reading) => {
+                {filteredReadings.map(reading => {
                   const evalStatus = evaluateHealth(
                     reading.heartRate,
                     reading.spo2
@@ -154,7 +154,10 @@ export default function History() {
                   };
 
                   return (
-                    <TableRow key={reading.id} className="hover:bg-secondary/30">
+                    <TableRow
+                      key={reading.id}
+                      className="hover:bg-secondary/30"
+                    >
                       <TableCell>
                         {format(reading.timestamp, "MMM dd, yyyy HH:mm:ss")}
                       </TableCell>

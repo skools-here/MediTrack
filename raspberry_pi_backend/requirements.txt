@@ -1,4 +1,0 @@
-flask
-paho-mqtt   
-
-# install on the pi: pip3 install -r requirements.txt

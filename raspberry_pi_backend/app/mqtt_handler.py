@@ -3,9 +3,6 @@ import paho.mqtt.client as mqtt
 from app.config import MQTT_BROKER, MQTT_PORT, MQTT_TOPIC
 from app.database import insert_data
 
-def validate_data(hr, spo2):
-    return 20 < hr < 220 and 70 < spo2 <= 100
-
 def on_connect(client, userdata, flags, rc):
     if rc == 0:
         print("[MQTT] Connected successfully!")
@@ -21,11 +18,8 @@ def on_message(client, userdata, msg):
         temp = float(data.get("temperatureC", 0))
         steps = int(data.get("steps", 0))   # NEW
 
-        if validate_data(hr, spo2):
-            insert_data(hr, spo2, temp, steps)   # pass steps
-            print(f"[SQLITE] Stored: HR={hr}, SpO2={spo2}, Temp={temp}, Steps={steps}")
-        else:
-            print(f"[SKIP] Invalid data: HR={hr}, SpO2={spo2}")
+        insert_data(hr, spo2, temp, steps)   # pass steps
+        print(f"[SQLITE] Stored: HR={hr}, SpO2={spo2}, Temp={temp}, Steps={steps}")
 
     except Exception as e:
         print(f"[ERROR] {e}")

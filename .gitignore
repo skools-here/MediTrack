@@ -22,3 +22,8 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+*.db
+*.bak
+MediTrack/raspberry_pi_backend/app/__pycache__/
+MediTrack/raspberry_pi_backend/app/*.pyc
