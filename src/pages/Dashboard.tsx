@@ -30,13 +30,13 @@ export default function Dashboard() {
       const data = await response.json();
 
       if (Array.isArray(data) && data.length > 0) {
-        const mapped = data.map((item) => ({
+        const mapped: HealthReading[] = data.map((item) => ({
           id: `${item.timestamp}-${Math.random()}`,
           deviceId: "ESP32-001",
-          timestamp: new Date(item.timestamp),
+          timestamp: new Date(item.timestamp), // valid Date
           heartRate: item.heartRate,
           spo2: item.spo2,
-          steps: item.steps ?? 0, // NEW STEP COUNT FIELD
+          steps: item.steps ?? 0,
           signalQuality: 100,
         }));
 
@@ -44,7 +44,10 @@ export default function Dashboard() {
         setIsConnected(true);
 
         const latest = mapped[mapped.length - 1];
-        const evaluation = evaluateHealth(latest.heartRate, latest.spo2);
+        const evaluation = evaluateHealth(
+          latest.heartRate,
+          latest.spo2
+        );
 
         if (evaluation.overall === "critical") {
           toast.error("Critical Alert", { description: evaluation.message });
@@ -72,6 +75,7 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto p-6 space-y-6">
+        
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
@@ -96,7 +100,6 @@ export default function Dashboard() {
         {/* Vital Cards */}
         {latestReading && evaluation ? (
           <>
-            {/* Updated grid to 3 columns */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <VitalCard
                 title="Heart Rate"
@@ -116,7 +119,6 @@ export default function Dashboard() {
                 lastUpdated={latestReading.timestamp}
               />
 
-              {/* NEW Step Count Card */}
               <VitalCard
                 title="Step Count"
                 value={latestReading.steps ?? 0}
@@ -135,7 +137,7 @@ export default function Dashboard() {
           </p>
         )}
 
-        {/* Live Chart */}
+        {/* Fixed Live Chart */}
         <LiveChart readings={readings} timeRange={30} />
 
         <DeviceList devices={devices} />
@@ -143,7 +145,7 @@ export default function Dashboard() {
         <div className="rounded-lg bg-primary/5 border border-primary/20 p-4">
           <p className="text-sm text-muted-foreground">
             <span className="font-semibold text-foreground">Note:</span> This
-            dashboard now receives XML data from the Flask backend. Ensure the
+            dashboard receives XML/JSON data from the Flask backend. Ensure the
             server is active and reachable.
           </p>
         </div>

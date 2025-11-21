@@ -28,23 +28,20 @@ export default function History() {
       const response = await fetch(`${API_BASE_URL}/data`);
       const data = await response.json();
 
-      // Expecting structure like:
-      // {
-      //   "readings": [
-      //      { "timestamp": "2025-01-01T10:00:00Z", "heartRate": 72, "spo2": 98 }
-      //   ]
-      // }
-
       if (!data.readings) return;
 
-      const parsed = data.readings.map((item: any) => ({
-        id: item.timestamp,
+      const parsed: HealthReading[] = data.readings.map((item: any) => ({
+        id: item.timestamp + "-" + Math.random(),
         deviceId: item.deviceId || "ESP32-001",
         timestamp: new Date(item.timestamp),
         heartRate: Number(item.heartRate),
         spo2: Number(item.spo2),
         steps: Number(item.steps ?? 0),
+        steps: Number(item.steps ?? 0),
       }));
+
+      // Sort by timestamp ascending
+      parsed.sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
 
       setReadings(parsed);
     } catch (err) {
@@ -59,11 +56,12 @@ export default function History() {
   // === Filter by date range ===
   const filteredReadings = readings;
 
-  // === Export to CSV ===
+  // ================== Export to CSV ==================
   const exportToCSV = () => {
     const headers = ["Timestamp", "Device", "Heart Rate", "SpO2", "Status"];
     const rows = filteredReadings.map(reading => {
       const evalStatus = evaluateHealth(reading.heartRate, reading.spo2);
+
       return [
         format(reading.timestamp, "yyyy-MM-dd HH:mm:ss"),
         reading.deviceId,
@@ -83,6 +81,7 @@ export default function History() {
     a.click();
   };
 
+  // ================== UI ==================
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto p-6 space-y-6">
@@ -161,13 +160,17 @@ export default function History() {
                       <TableCell>
                         {format(reading.timestamp, "MMM dd, yyyy HH:mm:ss")}
                       </TableCell>
+
                       <TableCell>{reading.deviceId}</TableCell>
+
                       <TableCell className="text-right">
                         {reading.heartRate} bpm
                       </TableCell>
+
                       <TableCell className="text-right">
                         {reading.spo2}%
                       </TableCell>
+
                       <TableCell>
                         <Badge
                           variant="outline"
