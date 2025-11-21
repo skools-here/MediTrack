@@ -21,13 +21,13 @@ export function LiveChart({ readings, timeRange = 30 }: LiveChartProps) {
   const now = new Date();
   const cutoff = new Date(now.getTime() - timeRange * 60 * 1000);
 
-  // Filter last X minutes, ensure timestamps are valid Dates
+  // Filter valid timestamps ONLY
   const filteredReadings = readings
-    .filter((r) => new Date(r.timestamp) >= cutoff)
-    .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
-  // Prepare data for the graph
-  const chartData = filteredReadings.map(reading => ({
-    time: format(new Date(reading.timestamp), 'HH:mm:ss'),
+    .filter((r) => r.timestamp instanceof Date && r.timestamp >= cutoff)
+    .sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
+
+  const chartData = filteredReadings.map((reading) => ({
+    time: format(reading.timestamp, "HH:mm:ss"),
     heartRate: reading.heartRate,
     spo2: reading.spo2,
   }));
@@ -42,56 +42,35 @@ export function LiveChart({ readings, timeRange = 30 }: LiveChartProps) {
           </span>
         </div>
 
-        <ResponsiveContainer width="100%" height={300}>
-          <LineChart data={chartData}>
-            <CartesianGrid
-              strokeDasharray="3 3"
-              stroke="hsl(var(--border))"
-              opacity={0.3}
-            />
-            <XAxis
-              dataKey="time"
-              stroke="hsl(var(--muted-foreground))"
-              tick={{ fill: "hsl(var(--muted-foreground))" }}
-              tickLine={{ stroke: "hsl(var(--border))" }}
-            />
-            <YAxis
-              stroke="hsl(var(--muted-foreground))"
-              tick={{ fill: "hsl(var(--muted-foreground))" }}
-              tickLine={{ stroke: "hsl(var(--border))" }}
-            />
-            <Tooltip
-              contentStyle={{
-                backgroundColor: "hsl(var(--card))",
-                border: "1px solid hsl(var(--border))",
-                borderRadius: "0.5rem",
-              }}
-              labelStyle={{ color: "hsl(var(--foreground))" }}
-            />
-            <Legend
-              wrapperStyle={{ color: "hsl(var(--foreground))" }}
-              iconType="line"
-            />
-            <Line
-              type="monotone"
-              dataKey="heartRate"
-              stroke="hsl(var(--chart-heart))"
-              strokeWidth={2}
-              dot={{ fill: "hsl(var(--chart-heart))", r: 3 }}
-              activeDot={{ r: 5 }}
-              name="Heart Rate (bpm)"
-            />
-            <Line
-              type="monotone"
-              dataKey="spo2"
-              stroke="hsl(var(--chart-spo2))"
-              strokeWidth={2}
-              dot={{ fill: "hsl(var(--chart-spo2))", r: 3 }}
-              activeDot={{ r: 5 }}
-              name="SpO₂ (%)"
-            />
-          </LineChart>
-        </ResponsiveContainer>
+        {/* FIXED HEIGHT WRAPPER */}
+        <div className="w-full h-[300px]">
+          <ResponsiveContainer width="100%" height="100%" className="!block">
+            <LineChart data={chartData}>
+              <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
+              <XAxis dataKey="time" />
+              <YAxis />
+              <Tooltip />
+              <Legend />
+
+              <Line
+                type="monotone"
+                dataKey="heartRate"
+                stroke="red"
+                strokeWidth={2}
+                dot={{ r: 3 }}
+                name="Heart Rate (bpm)"
+              />
+              <Line
+                type="monotone"
+                dataKey="spo2"
+                stroke="blue"
+                strokeWidth={2}
+                dot={{ r: 3 }}
+                name="SpO₂ (%)"
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
       </div>
     </Card>
   );
