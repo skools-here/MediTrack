@@ -28,19 +28,24 @@ export default function History() {
       const response = await fetch(`${API_BASE_URL}/data`);
       const data = await response.json();
 
-      if (!data.readings) return;
+      // Backend now returns a plain array: [...]
+      if (!Array.isArray(data)) {
+        console.error("Unexpected history response:", data);
+        return;
+      }
 
-      const parsed: HealthReading[] = data.readings.map((item: any) => ({
-        id: item.timestamp + "-" + Math.random(),
+      const parsed: HealthReading[] = data.map((item: any) => ({
+        id: `${item.timestamp}-${Math.random()}`,
         deviceId: item.deviceId || "ESP32-001",
         timestamp: new Date(item.timestamp),
         heartRate: Number(item.heartRate),
         spo2: Number(item.spo2),
         steps: Number(item.steps ?? 0),
-        steps: Number(item.steps ?? 0),
+        // signalQuality is not needed here, omit or set default if required in type
+        // signalQuality: 100,
       }));
 
-      // Sort by timestamp ascending
+      // Sort oldest → newest
       parsed.sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
 
       setReadings(parsed);
@@ -54,12 +59,32 @@ export default function History() {
   }, []);
 
   // === Filter by date range ===
-  const filteredReadings = readings;
+  const filteredReadings = readings.filter((reading) => {
+    if (!startDate && !endDate) return true;
+
+    const ts = reading.timestamp.getTime();
+
+    if (startDate) {
+      const start = new Date(startDate);
+      start.setHours(0, 0, 0, 0);
+      if (ts < start.getTime()) return false;
+    }
+
+    if (endDate) {
+      const end = new Date(endDate);
+      end.setHours(23, 59, 59, 999);
+      if (ts > end.getTime()) return false;
+    }
+
+    return true;
+  });
 
   // ================== Export to CSV ==================
   const exportToCSV = () => {
+    if (filteredReadings.length === 0) return;
+
     const headers = ["Timestamp", "Device", "Heart Rate", "SpO2", "Status"];
-    const rows = filteredReadings.map(reading => {
+    const rows = filteredReadings.map((reading) => {
       const evalStatus = evaluateHealth(reading.heartRate, reading.spo2);
 
       return [
@@ -71,7 +96,7 @@ export default function History() {
       ];
     });
 
-    const csv = [headers, ...rows].map(r => r.join(",")).join("\n");
+    const csv = [headers, ...rows].map((r) => r.join(",")).join("\n");
     const blob = new Blob([csv], { type: "text/csv" });
     const url = window.URL.createObjectURL(blob);
 
@@ -102,7 +127,7 @@ export default function History() {
               <Input
                 type="date"
                 value={startDate}
-                onChange={e => setStartDate(e.target.value)}
+                onChange={(e) => setStartDate(e.target.value)}
                 className="pl-10"
               />
             </div>
@@ -112,7 +137,7 @@ export default function History() {
               <Input
                 type="date"
                 value={endDate}
-                onChange={e => setEndDate(e.target.value)}
+                onChange={(e) => setEndDate(e.target.value)}
                 className="pl-10"
               />
             </div>
@@ -137,13 +162,13 @@ export default function History() {
               </TableHeader>
 
               <TableBody>
-                {filteredReadings.map(reading => {
+                {filteredReadings.map((reading) => {
                   const evalStatus = evaluateHealth(
                     reading.heartRate,
                     reading.spo2
                   );
 
-                  const statusColors: any = {
+                  const statusColors: Record<string, string> = {
                     healthy:
                       "bg-status-healthy/20 text-status-healthy border-status-healthy/40",
                     caution:
@@ -174,7 +199,7 @@ export default function History() {
                       <TableCell>
                         <Badge
                           variant="outline"
-                          className={statusColors[evalStatus.overall]}
+                          className={statusColors[evalStatus.overall] ?? ""}
                         >
                           {evalStatus.overall}
                         </Badge>
@@ -182,6 +207,14 @@ export default function History() {
                     </TableRow>
                   );
                 })}
+
+                {filteredReadings.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={5} className="text-center py-6">
+                      No readings found for the selected range.
+                    </TableCell>
+                  </TableRow>
+                )}
               </TableBody>
             </Table>
           </div>

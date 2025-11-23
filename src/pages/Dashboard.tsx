@@ -5,7 +5,7 @@ import { HealthStatusCard } from "@/components/health/HealthStatusCard";
 import { LiveChart } from "@/components/health/LiveChart";
 import { DeviceList } from "@/components/health/DeviceList";
 import { evaluateHealth } from "@/lib/healthEvaluation";
-import { HealthReading, Device } from "@/types/health";
+import type { HealthReading, Device } from "@/types/health";
 import { toast } from "sonner";
 
 const API_BASE_URL = "http://localhost:5000";
@@ -24,46 +24,99 @@ export default function Dashboard() {
   const [devices] = useState<Device[]>(mockDevices);
   const [isConnected, setIsConnected] = useState(false);
 
-  const fetchData = async () => {
+  // 🔹 Load some history for the chart
+  const fetchHistory = async () => {
     try {
       const response = await fetch(`${API_BASE_URL}/data`);
       const data = await response.json();
 
       if (Array.isArray(data) && data.length > 0) {
-        const mapped: HealthReading[] = data.map((item) => ({
+        let mapped: HealthReading[] = data.map((item: any) => ({
           id: `${item.timestamp}-${Math.random()}`,
           deviceId: "ESP32-001",
-          timestamp: new Date(item.timestamp), // valid Date
+          timestamp: new Date(item.timestamp),
           heartRate: item.heartRate,
           spo2: item.spo2,
           steps: item.steps ?? 0,
           signalQuality: 100,
         }));
 
-        setReadings(mapped);
-        setIsConnected(true);
-
-        const latest = mapped[mapped.length - 1];
-        const evaluation = evaluateHealth(
-          latest.heartRate,
-          latest.spo2
+        // ✅ Ensure history is in ascending time order
+        mapped = mapped.sort(
+          (a, b) => a.timestamp.getTime() - b.timestamp.getTime()
         );
 
-        if (evaluation.overall === "critical") {
-          toast.error("Critical Alert", { description: evaluation.message });
-        } else if (evaluation.overall === "caution") {
-          toast.warning("Caution", { description: evaluation.message });
-        }
+        setReadings(mapped);
+        setIsConnected(true);
       }
     } catch (error) {
-      console.error("Failed to fetch JSON:", error);
+      console.error("Failed to fetch history:", error);
+      setIsConnected(false);
+    }
+  };
+
+  // 🔹 Poll only the latest value every 3 seconds
+  const fetchLatest = async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/latest`);
+      if (!response.ok) {
+        // 404 when no data yet – not a hard error
+        if (response.status === 404) {
+          setIsConnected(false);
+          return;
+        }
+        throw new Error(`HTTP ${response.status}`);
+      }
+
+      const item = await response.json();
+
+      const latest: HealthReading = {
+        id: `${item.timestamp}-${Math.random()}`,
+        deviceId: "ESP32-001",
+        timestamp: new Date(item.timestamp),
+        heartRate: item.heartRate,
+        spo2: item.spo2,
+        steps: item.steps ?? 0,
+        signalQuality: 100,
+      };
+
+      setReadings((prev) => {
+        // avoid duplicate if timestamp is same as last one
+        if (
+          prev.length > 0 &&
+          prev[prev.length - 1].timestamp.getTime() ===
+            latest.timestamp.getTime()
+        ) {
+          return prev;
+        }
+
+        const updated = [...prev, latest];
+
+        // keep only last 100 points for chart
+        return updated.slice(-100);
+      });
+
+      setIsConnected(true);
+
+      const evaluation = evaluateHealth(latest.heartRate, latest.spo2);
+
+      if (evaluation.overall === "critical") {
+        toast.error("Critical Alert", { description: evaluation.message });
+      } else if (evaluation.overall === "caution") {
+        toast.warning("Caution", { description: evaluation.message });
+      }
+    } catch (error) {
+      console.error("Failed to fetch latest:", error);
       setIsConnected(false);
     }
   };
 
   useEffect(() => {
-    fetchData();
-    const interval = setInterval(fetchData, 3000);
+    // initial load
+    fetchHistory();
+    fetchLatest();
+
+    const interval = setInterval(fetchLatest, 3000);
     return () => clearInterval(interval);
   }, []);
 
@@ -75,7 +128,6 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto p-6 space-y-6">
-        
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
@@ -97,7 +149,7 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Vital Cards */}
+        {/* Vital Cards + Health Status */}
         {latestReading && evaluation ? (
           <>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -137,9 +189,10 @@ export default function Dashboard() {
           </p>
         )}
 
-        {/* Fixed Live Chart */}
+        {/* Live Chart */}
         <LiveChart readings={readings} timeRange={30} />
 
+        {/* Device list */}
         <DeviceList devices={devices} />
 
         <div className="rounded-lg bg-primary/5 border border-primary/20 p-4">
