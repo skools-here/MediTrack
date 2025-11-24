@@ -1,11 +1,10 @@
 # **Wearable Health Server (ESP32 → Raspberry Pi)**
----
+
 A lightweight backend system for real-time health monitoring.
 The ESP32 publishes vitals (Heart Rate, SpO₂, Temperature, Steps) over MQTT.
 The Raspberry Pi receives the data, stores it in SQLite, and exposes a Flask REST API.
 
 ## System Architecture**
----
 
 **ESP32 → MQTT → Raspberry Pi → SQLite → Flask API**
 
@@ -19,8 +18,7 @@ The Raspberry Pi receives the data, stores it in SQLite, and exposes a Flask RES
   * **database.py** — SQLite DB + table creation, insert, fetch.
   * **api.py** — Flask REST API exposing `/data`, `/latest`, `/upload`.
   * **main.py** — Runs MQTT and Flask API together.
-
----
+  
 
 ## **Project Structure**
 ```
@@ -36,10 +34,8 @@ main.py
 README.md
 ```
 
----
 
 ## **Configuration**
----
 
 Edit **`app/config.py`**:
 
@@ -52,10 +48,8 @@ SQLITE_DB   = "health_data.db"
 FLASK_PORT  = 5000
 ```
 
----
 
 ## **Run Instructions**
----
 
 ### **Start server**
 ```bash
@@ -82,7 +76,6 @@ Example JSON:
 ---
 
 # **Requirements for a fresh Raspberry Pi OS setup**
----
 
 Below is EVERYTHING needed to make this project run on a clean Raspberry Pi OS installation.
 
