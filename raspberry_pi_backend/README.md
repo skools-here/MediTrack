@@ -4,7 +4,7 @@ A lightweight backend system for real-time health monitoring.
 The ESP32 publishes vitals (Heart Rate, SpO₂, Temperature, Steps) over MQTT.
 The Raspberry Pi receives the data, stores it in SQLite, and exposes a Flask REST API.
 
-## System Architecture**
+## **System Architecture**
 
 **ESP32 → MQTT → Raspberry Pi → SQLite → Flask API**
 
