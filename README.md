@@ -1,5 +1,4 @@
 # **Wearable Health Monitoring System**
----
 A full-stack IoT system for real-time health monitoring using **ESP32**, **MAX30102**, **Raspberry Pi**, **MQTT**, **SQLite**, **Flask**, and a **React-based dashboard**.
 
 It streams heart rate, SpO₂, temperature, and steps from a wearable device to a Raspberry Pi, stores the data locally, and visualizes it in a beautiful web UI.
@@ -7,7 +6,6 @@ It streams heart rate, SpO₂, temperature, and steps from a wearable device to 
 ---
 
 # **System Architecture**
----
 
 ```
  ┌────────┐     I2C      ┌──────────────┐     MQTT      ┌───────────────┐
@@ -25,7 +23,6 @@ It streams heart rate, SpO₂, temperature, and steps from a wearable device to 
 ---
 
 # **Project Structure**
----
 
 ```
 /
@@ -59,7 +56,6 @@ It streams heart rate, SpO₂, temperature, and steps from a wearable device to 
 ---
 
 # **1. ESP32 Firmware**
----
 
 ### **Features**
 
@@ -97,7 +93,6 @@ Upload at **115200 baud**.
 ---
 
 # **2. Raspberry Pi Backend**
----
 
 Runs three key services:
 
@@ -113,10 +108,8 @@ Stores timestamped health data.
 
 Used by the dashboard to fetch live and historical vitals.
 
----
 
 ## **Setup on a fresh Raspberry Pi OS**
----
 
 ### 1) Update
 
@@ -161,7 +154,6 @@ http://<raspberry-pi-ip>:5000
 ---
 
 # **Backend API Documentation**
----
 
 ### **GET /latest**
 
@@ -189,7 +181,6 @@ Payload:
 ---
 
 #**3. Web Dashboard (React + Tailwind + ShadCN)**
----
 
 A modern, responsive UI showing:
 
@@ -200,10 +191,8 @@ A modern, responsive UI showing:
 - Health evaluation (healthy / caution / critical)
 - History export to CSV
 
----
 
 ## **Setup**
----
 
 ### 1) Install dependencies
 
@@ -233,7 +222,6 @@ http://localhost:5000
 ---
 
 # **Health Evaluation Logic**
----
 
 Values flagged as:
 
@@ -250,7 +238,6 @@ Used in:
 ---
 
 # **Configuration**
----
 
 Backend config:
 `raspberry-pi/app/config.py`
@@ -274,9 +261,3 @@ const API_BASE_URL = "http://localhost:5000";
 Change these if hosting on different devices.
 
 ---
-
-# 🧑‍💻 **Author**
----
-
-Built with ❤️ for learning, IoT experimentation, and health-tech prototyping.
-
